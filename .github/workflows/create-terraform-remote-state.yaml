@@ -1,0 +1,102 @@
+name: Terraform Plan and Apply
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/create-terraform-remote-state.yaml'
+      - 'tf-remote-state/**/*.tf'
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: "ap-south-1"
+
+jobs:
+  terraform:
+    name: Terraform Workflow
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform CLI
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: latest
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./tf-remote-state
+
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        id: plan
+        run: terraform plan -out=tfplan
+        working-directory: ./tf-remote-state
+
+      - name: Terraform Plan Summary
+        if: github.event_name == 'pull_request'
+        id: plan-summary
+        run: |
+          terraform show -no-color tfplan > plan_output.txt
+          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add')
+          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change')
+          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy')
+          echo "::set-output name=add::${ADD}"
+          echo "::set-output name=change::${CHANGE}"
+          echo "::set-output name=destroy::${DESTROY}"
+        working-directory: ./tf-remote-state
+
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes('Terraform Plan Summary'));
+
+            const planSummary = `
+            ### Terraform Plan Summary
+            - **Additions:** ${{ steps.plan-summary.outputs.add }}
+            - **Changes:** ${{ steps.plan-summary.outputs.change }}
+            - **Deletions:** ${{ steps.plan-summary.outputs.destroy }}
+            `;
+
+            if (botComment) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+              });
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: planSummary,
+            });
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./tf-remote-state
