@@ -3,7 +3,7 @@ output "vpc_id" {
 }
 
 output "azs" {
-  value = local.availability_zones
+  value = local.azs
 }
 
 output "database_subnet_group_name" {

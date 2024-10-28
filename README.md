@@ -1,2 +1,2 @@
-# eks-in-production
-Deploy an EKS cluster in Production in AWS Cloud
+# eks-with-karpenter
+Deploy an EKS cluster with karpenter in AWS Cloud

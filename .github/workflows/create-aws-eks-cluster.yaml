@@ -1,10 +1,10 @@
-name: Terraform Plan and Apply
+name: Tf Plan and Apply 2 create EKS
 
 on:
   pull_request:
     paths:
-      - '.github/workflows/create-aws-vpc.yaml'
-      - 'EKS/vpc/**/*.tf'
+      - '.github/workflows/create-aws-eks-cluster.yaml'
+      - 'EKS/cluster/**/*.tf'
   push:
     branches:
       - main
@@ -39,7 +39,7 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ./EKS/vpc
+        working-directory: ./EKS/cluster
 
       - name: Terraform Plan
         if: github.event_name == 'pull_request'
@@ -47,7 +47,7 @@ jobs:
         run: |
           terraform plan -no-color > plan_output.txt || true
           cat plan_output.txt
-        working-directory: ./EKS/vpc
+        working-directory: ./EKS/cluster
 
       - name: Terraform Plan Summary
         if: github.event_name == 'pull_request'
@@ -70,7 +70,7 @@ jobs:
           echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
-        working-directory: ./EKS/vpc
+        working-directory: ./EKS/cluster
 
       - name: Comment Plan on PR
         if: github.event_name == 'pull_request'
@@ -114,7 +114,7 @@ jobs:
         run: |
           terraform apply -auto-approve -no-color > apply_output.txt
           cat apply_output.txt
-        working-directory: ./EKS/vpc
+        working-directory: ./EKS/cluster
 
       - name: Terraform Apply Summary
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -131,4 +131,4 @@ jobs:
           echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
-        working-directory: ./EKS/vpc
+        working-directory: ./EKS/cluster
