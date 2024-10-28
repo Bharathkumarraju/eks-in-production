@@ -52,15 +52,15 @@ jobs:
         id: plan-summary
         run: |
           terraform show -no-color tfplan > plan_output.txt
-          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add' | grep -oE '[0-9]+')
-          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change' | grep -oE '[0-9]+')
-          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy' | grep -oE '[0-9]+')
-          echo "add=${ADD}" >> $GITHUB_ENV
-          echo "change=${CHANGE}" >> $GITHUB_ENV
-          echo "destroy=${DESTROY}" >> $GITHUB_ENV
-
-          # Create an annotation for the summary
-          echo "::notice title=Terraform Plan Summary::Additions: ${ADD}, Changes: ${CHANGE}, Deletions: ${DESTROY}"
+          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add' || echo '0')
+          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change' || echo '0')
+          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy' || echo '0')
+          echo "Terraform Plan Summary:"
+          echo "Additions: $ADD, Changes: $CHANGE, Deletions: $DESTROY"
+          echo "add=$ADD" >> $GITHUB_ENV
+          echo "change=$CHANGE" >> $GITHUB_ENV
+          echo "destroy=$DESTROY" >> $GITHUB_ENV
+          echo "Terraform Plan Summary\nAdditions: $ADD\nChanges: $CHANGE\nDeletions: $DESTROY" >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
@@ -79,9 +79,9 @@ jobs:
 
             const planSummary = `
             ### Terraform Plan Summary
-            - **Additions:** ${process.env.add || '0'}
-            - **Changes:** ${process.env.change || '0'}
-            - **Deletions:** ${process.env.destroy || '0'}
+            - **Additions:** ${{ env.add }}
+            - **Changes:** ${{ env.change }}
+            - **Deletions:** ${{ env.destroy }}
             `;
 
             if (botComment) {
