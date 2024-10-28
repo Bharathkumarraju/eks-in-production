@@ -1,5 +1,5 @@
 module "state_storage" {
-  source = "./modules/terraform-backend"
+  source = "../modules/terraform-backend"
 
   aws_kms_alias                       = "terraform-state-storage-bharath-mumbai"
   tf_state_storage_bucket_name        = "terraform-state-storage-bharath-mumbai"
