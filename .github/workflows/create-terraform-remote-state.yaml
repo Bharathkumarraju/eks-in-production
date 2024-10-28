@@ -44,14 +44,15 @@ jobs:
       - name: Terraform Plan
         if: github.event_name == 'pull_request'
         id: plan
-        run: terraform plan -out=tfplan
+        run: |
+          terraform plan -no-color > plan_output.txt
+          cat plan_output.txt
         working-directory: ./tf-remote-state
 
       - name: Terraform Plan Summary
         if: github.event_name == 'pull_request'
         id: plan-summary
         run: |
-          terraform show -no-color tfplan > plan_output.txt
           ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add' || echo '0')
           CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change' || echo '0')
           DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy' || echo '0')
@@ -68,7 +69,7 @@ jobs:
 
       - name: Comment Plan on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -104,5 +105,6 @@ jobs:
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve tfplan
+        run: |
+          terraform apply -auto-approve
         working-directory: ./tf-remote-state
