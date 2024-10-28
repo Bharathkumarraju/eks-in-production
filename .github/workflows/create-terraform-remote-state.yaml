@@ -65,6 +65,8 @@ jobs:
           echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
+          echo "### Detailed Plan Output" >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt | grep -A 10 'Terraform will perform the following actions:' >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
@@ -105,6 +107,24 @@ jobs:
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: apply
         run: |
-          terraform apply -auto-approve
+          terraform apply -auto-approve -no-color > apply_output.txt
+          cat apply_output.txt
+        working-directory: ./tf-remote-state
+
+      - name: Terraform Apply Summary
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          ADD=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ added' || echo '0')
+          CHANGE=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ changed' || echo '0')
+          DESTROY=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ destroyed' || echo '0')
+          echo "Terraform Apply Summary:"
+          echo "Additions: $ADD, Changes: $CHANGE, Deletions: $DESTROY"
+          echo "### Terraform Apply Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
+          echo "### Detailed Apply Output" >> $GITHUB_STEP_SUMMARY
+          cat apply_output.txt | grep -A 10 'Resources:' >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
