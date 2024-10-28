@@ -23,15 +23,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Terraform CLI
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: latest
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -52,12 +52,15 @@ jobs:
         id: plan-summary
         run: |
           terraform show -no-color tfplan > plan_output.txt
-          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add')
-          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change')
-          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy')
-          echo "::set-output name=add::${ADD}"
-          echo "::set-output name=change::${CHANGE}"
-          echo "::set-output name=destroy::${DESTROY}"
+          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add' | grep -oE '[0-9]+')
+          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change' | grep -oE '[0-9]+')
+          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy' | grep -oE '[0-9]+')
+          echo "add=${ADD}" >> $GITHUB_ENV
+          echo "change=${CHANGE}" >> $GITHUB_ENV
+          echo "destroy=${DESTROY}" >> $GITHUB_ENV
+
+          # Create an annotation for the summary
+          echo "::notice title=Terraform Plan Summary::Additions: ${ADD}, Changes: ${CHANGE}, Deletions: ${DESTROY}"
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
@@ -76,9 +79,9 @@ jobs:
 
             const planSummary = `
             ### Terraform Plan Summary
-            - **Additions:** ${{ steps.plan-summary.outputs.add }}
-            - **Changes:** ${{ steps.plan-summary.outputs.change }}
-            - **Deletions:** ${{ steps.plan-summary.outputs.destroy }}
+            - **Additions:** ${process.env.add || '0'}
+            - **Changes:** ${process.env.change || '0'}
+            - **Deletions:** ${process.env.destroy || '0'}
             `;
 
             if (botComment) {
