@@ -60,7 +60,10 @@ jobs:
           echo "add=$ADD" >> $GITHUB_ENV
           echo "change=$CHANGE" >> $GITHUB_ENV
           echo "destroy=$DESTROY" >> $GITHUB_ENV
-          echo "Terraform Plan Summary\nAdditions: $ADD\nChanges: $CHANGE\nDeletions: $DESTROY" >> $GITHUB_STEP_SUMMARY
+          echo "### Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
