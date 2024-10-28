@@ -5,9 +5,7 @@ on:
     paths:
       - '.github/workflows/create-terraform-remote-state.yaml'
       - 'tf-remote-state/**/*.tf'
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 env:
   AWS_REGION: "ap-south-1"
