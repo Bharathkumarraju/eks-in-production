@@ -45,7 +45,7 @@ jobs:
         if: github.event_name == 'pull_request'
         id: plan
         run: |
-          terraform plan -no-color > plan_output.txt
+          terraform plan -no-color > plan_output.txt || true
           cat plan_output.txt
         working-directory: ./tf-remote-state
 
@@ -53,20 +53,23 @@ jobs:
         if: github.event_name == 'pull_request'
         id: plan-summary
         run: |
-          ADD=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to add' || echo '0')
-          CHANGE=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to change' || echo '0')
-          DESTROY=$(grep 'Plan:' plan_output.txt | grep -oE '[0-9]+ to destroy' || echo '0')
+          ADD=$(grep -oE '[0-9]+ to add' plan_output.txt | grep -oE '[0-9]+' || echo '0')
+          CHANGE=$(grep -oE '[0-9]+ to change' plan_output.txt | grep -oE '[0-9]+' || echo '0')
+          DESTROY=$(grep -oE '[0-9]+ to destroy' plan_output.txt | grep -oE '[0-9]+' || echo '0')
+
           echo "Terraform Plan Summary:"
           echo "Additions: $ADD, Changes: $CHANGE, Deletions: $DESTROY"
+
+          # Set environment variables for PR comment
           echo "add=$ADD" >> $GITHUB_ENV
           echo "change=$CHANGE" >> $GITHUB_ENV
           echo "destroy=$DESTROY" >> $GITHUB_ENV
+
+          # Update GitHub step summary
           echo "### Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
-          echo "### Detailed Plan Output" >> $GITHUB_STEP_SUMMARY
-          cat plan_output.txt | grep -A 10 'Resources:' >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
@@ -116,15 +119,16 @@ jobs:
       - name: Terraform Apply Summary
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          ADD=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ added' || echo '0')
-          CHANGE=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ changed' || echo '0')
-          DESTROY=$(grep 'Apply complete!' apply_output.txt | grep -oE '[0-9]+ destroyed' || echo '0')
+          ADD=$(grep -oE '[0-9]+ added' apply_output.txt | grep -oE '[0-9]+' || echo '0')
+          CHANGE=$(grep -oE '[0-9]+ changed' apply_output.txt | grep -oE '[0-9]+' || echo '0')
+          DESTROY=$(grep -oE '[0-9]+ destroyed' apply_output.txt | grep -oE '[0-9]+' || echo '0')
+
           echo "Terraform Apply Summary:"
           echo "Additions: $ADD, Changes: $CHANGE, Deletions: $DESTROY"
+
+          # Update GitHub step summary
           echo "### Terraform Apply Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Additions:** $ADD" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
-          echo "### Detailed Apply Output" >> $GITHUB_STEP_SUMMARY
-          cat apply_output.txt | grep -A 10 'Resources:' >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
