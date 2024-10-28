@@ -66,7 +66,7 @@ jobs:
           echo "- **Changes:** $CHANGE" >> $GITHUB_STEP_SUMMARY
           echo "- **Deletions:** $DESTROY" >> $GITHUB_STEP_SUMMARY
           echo "### Detailed Plan Output" >> $GITHUB_STEP_SUMMARY
-          cat plan_output.txt | grep -A 10 'Terraform will perform the following actions:' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt | grep -A 10 'Resources:' >> $GITHUB_STEP_SUMMARY
         working-directory: ./tf-remote-state
 
       - name: Comment Plan on PR
