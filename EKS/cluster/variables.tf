@@ -60,7 +60,6 @@ variable "ek_config" {
     max_nodes      = number
     desired_nodes  = number
     instance_types = list(string)
-    capacity_type  = string
   })
   default = {
     min_nodes      = 3
