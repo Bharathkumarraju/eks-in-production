@@ -1,0 +1,77 @@
+testFramework:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+plugins:
+  - grafana-piechart-panel
+
+grafana.ini:
+  analytics:
+    check_for_updates: false
+  server:
+    root_url: "https://grafana.${domain_name}"
+  log.console:
+   format: json
+
+ingress:
+  enabled: true
+  ingressClassName: "nginx"
+  hosts:
+    - grafana.${domain_name}
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://thanos-query.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+      - name: CloudWatch
+        type: cloudwatch
+        access: proxy
+        uid: cloudwatch
+        editable: false
+        jsonData:
+          authType: default
+          defaultRegion: ${region}
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo-distributed-query-frontend.monitoring.svc.cluster.local:3100
+        basicAuth: false
+        jsonData:
+          serviceMap:
+            datasourceUid: Prometheus
+          nodeGraph:
+            enabled: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-distributed-gateway.monitoring.svc.cluster.local:80
+        jsonData:
+          maxLines: 1000
+          derivedFields:
+            - datasourceUid: Tempo
+              matcherRegex: \"trace_id\":\"(\w+)\"
+              name: TraceID
+              url: '$${__value.raw}'
+
+sidecar:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 256Mi
+    requests:
+      cpu: 10m
+      memory: 128Mi
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    folder: /tmp/dashboards
+    searchNamespace: monitoring
