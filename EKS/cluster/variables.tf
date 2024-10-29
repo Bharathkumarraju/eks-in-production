@@ -63,9 +63,9 @@ variable "ek_config" {
     capacity_type  = string
   })
   default = {
-    min_nodes      = 2
+    min_nodes      = 3
     max_nodes      = 5
-    desired_nodes  = 2
+    desired_nodes  = 3
     instance_types = ["t3.medium"]
     capacity_type  = "SPOT"
   }
