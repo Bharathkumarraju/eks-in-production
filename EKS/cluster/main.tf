@@ -229,6 +229,8 @@ module "eks" {
 }
 
 
+
+
 # install Karpenter helm chart
 
 module "karpenter" {
@@ -337,6 +339,16 @@ resource "kubectl_manifest" "karpenter_node_pool" {
   ]
 }
 
+
+# create sample app namespace
+resource "kubernetes_namespace_v1" "this" {
+  metadata {
+    name = local.app_name
+  }
+}
+
+# Sample deployment
+
 resource "kubectl_manifest" "karpenter_example_deployment" {
   yaml_body = <<-YAML
     apiVersion: apps/v1
@@ -363,7 +375,7 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
   YAML
 
   depends_on = [
-    helm_release.karpenter
+    helm_release.karpenter, kubernetes_namespace_v1.this
   ]
 }
 
