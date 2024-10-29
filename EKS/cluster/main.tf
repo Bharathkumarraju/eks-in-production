@@ -359,23 +359,23 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
       replicas: 0
       selector:
         matchLabels:
-          app: inflate
+          app: sample-login
       template:
         metadata:
           labels:
-            app: inflate
+            app: sample-login
         spec:
           terminationGracePeriodSeconds: 0
           containers:
-            - name: inflate
-              image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
+            - name: sample-login
+              image: bharathkumarraju/simple-login-page:v8_amd
               resources:
                 requests:
                   cpu: 1
   YAML
 
   depends_on = [
-    helm_release.karpenter, kubernetes_namespace_v1.this
+    kubernetes_namespace_v1.this
   ]
 }
 
