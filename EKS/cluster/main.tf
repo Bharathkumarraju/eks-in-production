@@ -187,7 +187,6 @@ module "eks" {
       min_size        = var.ek_config.min_nodes
       max_size        = var.ek_config.max_nodes
       desired_size    = var.ek_config.desired_nodes
-      capacity_type    = var.ek_config.capacity_type
 
       # vpc_security_group_ids = [
       #   aws_security_group.eks_node.id
