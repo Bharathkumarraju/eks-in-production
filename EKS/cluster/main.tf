@@ -354,7 +354,7 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: inflate
+      name: sampleapp
     spec:
       replicas: 0
       selector:
