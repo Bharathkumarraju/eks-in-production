@@ -354,26 +354,39 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: inflate
+      name: flask-app
+      namespace: default
+      labels:
+        app: flask-app
     spec:
-      replicas: 0
+      replicas: 1
       selector:
         matchLabels:
-          app: sample-login
+          app: flask-app
       template:
         metadata:
           labels:
-            app: sample-login
+            app: flask-app
         spec:
-          terminationGracePeriodSeconds: 0
           containers:
-            - name: sample-login
-              image: bharathkumarraju/simple-login-page:v8_amd
-              resources:
-                requests:
-                  cpu: 1
+          - name: flask-app
+            image: bharathkumarraju/simple-login-page:v8_amd
+            ports:
+            - containerPort: 5001
+            resources:
+              limits:
+                cpu: "500m"
+                memory: "256Mi"
+              requests:
+                cpu: "250m"
+                memory: "128Mi"
+            volumeMounts:
+            - mountPath: /var/log
+              name: log-volume
+          volumes:
+          - name: log-volume
+            emptyDir: {}
   YAML
-
   depends_on = [
     kubernetes_namespace_v1.this
   ]
