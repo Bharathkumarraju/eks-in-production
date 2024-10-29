@@ -150,4 +150,7 @@ module "loki" {
       }
     ]
   }
+  depends_on = [
+    module.prometheus
+  ]
 }

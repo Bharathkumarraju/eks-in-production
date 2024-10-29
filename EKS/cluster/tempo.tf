@@ -125,4 +125,7 @@ module "tempo" {
       }
     ]
   }
+  depends_on = [
+  module.prometheus
+  ]
 }
