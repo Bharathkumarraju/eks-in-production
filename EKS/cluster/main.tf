@@ -355,7 +355,7 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
     kind: Deployment
     metadata:
       name: flask-app
-      namespace: default
+      namespace: sampleapp
       labels:
         app: flask-app
     spec:
