@@ -229,6 +229,8 @@ module "eks" {
 }
 
 
+
+
 # install Karpenter helm chart
 
 module "karpenter" {
@@ -336,6 +338,16 @@ resource "kubectl_manifest" "karpenter_node_pool" {
     kubectl_manifest.karpenter_node_class
   ]
 }
+
+
+# create sample app namespace
+resource "kubernetes_namespace_v1" "this" {
+  metadata {
+    name = local.app_name
+  }
+}
+
+# Sample deployment
 
 resource "kubectl_manifest" "karpenter_example_deployment" {
   yaml_body = <<-YAML
