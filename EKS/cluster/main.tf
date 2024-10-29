@@ -375,7 +375,7 @@ resource "kubectl_manifest" "karpenter_example_deployment" {
   YAML
 
   depends_on = [
-    helm_release.karpenter
+    helm_release.karpenter, kubernetes_namespace_v1.this
   ]
 }
 
